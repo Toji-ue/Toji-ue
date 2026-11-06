@@ -1,0 +1,28 @@
+name: Refresh public profile cards
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: profile-stats
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Render public data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/refresh-stats.py
+      - name: Save changed cards
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/stats.svg assets/languages.svg assets/activity.svg
+          if ! git diff --cached --quiet; then
+            git commit -m "Refresh public profile cards"
+            git push
+          fi
