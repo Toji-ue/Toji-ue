@@ -1858,6 +1858,6 @@
       "weekday": 6
     }
   ],
-  "calendar_scope": "GitHub contribution calendar; private visibility not yet verified",
-  "private_calendar_verified": false
+  "calendar_scope": "GitHub contribution calendar; private counts verified",
+  "private_calendar_verified": true
 }
