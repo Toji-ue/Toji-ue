@@ -1,42 +1,22 @@
-### 🐾 whoami
+<picture><source media="(max-width: 600px)" srcset="assets/about-mobile.svg" /><img src="assets/about.svg" width="100%" alt="Hey, I'm Toji. Student developer building websites and small tools. Learning three.js and Blender; games, anime and music offscreen." /></picture>
 
-Hey, I'm **Toji** — a student developer who likes building things for the web.
-Usually accompanied by a sleepy raccoon. Music is almost always on.
+<picture><source media="(max-width: 600px)" srcset="assets/toolkit-mobile.svg" /><img src="assets/toolkit.svg" width="100%" alt="Toolkit: TypeScript, Next.js, React, Tailwind, GSAP, ScrollTrigger, Lenis, SVG, PostgreSQL, Prisma, Auth.js, Cloudflare R2, Docker and GitHub Actions." /></picture>
 
-```typescript
-const toji = {
-  building: ["websites", "small tools"],
-  daily: ["TypeScript", "Next.js", "React"],
-  learning: ["three.js", "Blender"],
-  offscreen: ["games", "anime", "music"],
-  motto: "just five more minutes",
-};
-```
+[<picture><source media="(max-width: 600px)" srcset="assets/project-mobile.svg" /><img src="assets/project.svg" width="100%" alt="Steam-Unblock: a Windows utility for working around Steam access issues, with a PowerShell core and C#/WPF interface. Open the repository." /></picture>](https://github.com/Toji-ue/Steam-Unblock)
 
-### 🛠️ toolkit
+[Source code ↗](https://github.com/Toji-ue/Steam-Unblock) · [Releases ↗](https://github.com/Toji-ue/Steam-Unblock/releases)
 
-| Area | Tools |
-| :--- | :--- |
-| Web | TypeScript · Next.js · React · Tailwind CSS |
-| Motion | GSAP · ScrollTrigger · Lenis · SVG |
-| Backend | PostgreSQL · Prisma · Auth.js · Cloudflare R2 |
-| Shipping | Docker · GitHub Actions |
+<p align="center"><img src="assets/desktop-companion.gif" width="420" alt="Toji, a mauve-haired raccoon with orange goggles, rests a cheek on one hand over a small desktop window. Subtle breathing, ear and tail movement." /></p>
 
-### 📂 a small tool I built
+<picture><source media="(max-width: 600px)" srcset="assets/stats-mobile.svg" /><img src="assets/stats.svg" width="100%" alt="Total owned repositories including private projects, contributions over twelve months, public repository stars and followers." /></picture>
 
-**[Steam-Unblock](https://github.com/Toji-ue/Steam-Unblock)**
+<picture><source media="(max-width: 600px)" srcset="assets/languages-mobile.svg" /><img src="assets/languages.svg" width="100%" alt="Language composition by bytes across owned public and private repositories, including archived repositories and excluding forks." /></picture>
 
-A Windows utility for working around Steam access issues, with a PowerShell core and a C#/WPF interface.
+<picture><source media="(max-width: 600px)" srcset="assets/activity-mobile.svg" /><img src="assets/activity.svg" width="100%" alt="Twelve-month GitHub contribution calendar. The card states whether private contribution visibility has been verified." /></picture>
 
-[Explore the source →](https://github.com/Toji-ue/Steam-Unblock) · [Releases](https://github.com/Toji-ue/Steam-Unblock/releases)
+<sub>Repository totals and languages include private projects, without revealing project details. Languages describe repository contents, not proficiency. Contributions follow GitHub's counting rules. Last successful refresh is shown on the card.</sub>
 
-### 📊 around GitHub
-
-<img src="assets/stats.svg" width="49%" alt="Public repository and follower statistics" /> <img src="assets/languages.svg" width="49%" alt="Language distribution by bytes in public, non-fork repositories" />
-
-<img src="assets/activity.svg" width="100%" alt="Recent public GitHub events, grouped by day" />
-
-<sub>Public repositories only. Languages describe repository contents, not proficiency. Activity shows recent public events, not the private contribution calendar.</sub>
+[View a still version of the mascot](assets/desktop-companion.png)
 
 ---
 

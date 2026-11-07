@@ -1,90 +1,115 @@
-"""Render public GitHub data locally; requires authenticated gh, no extra packages."""
+"""Fetch privately, publish aggregates only. Standard library + authenticated gh.
+
+No raw API responses, repository identifiers or CLI stderr are logged or saved.
+"""
+import calendar
 import json
+import os
 import subprocess
+import sys
+import tempfile
 from collections import Counter
-from datetime import datetime, timedelta, timezone
-from html import escape
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-USER = "Toji-ue"
+USER = 'Toji-ue'
 
 
-def api(path):
-    return json.loads(subprocess.check_output(["gh", "api", path], text=True, encoding="utf-8"))
-
-
-def paged(path, maximum=100):
-    result = []
-    for page in range(1, maximum + 1):
-        rows = api(f"{path}?per_page=100&page={page}")
-        result.extend(rows)
-        if len(rows) < 100:
-            break
+def api(path, query=None):
+    args = ['gh', 'api', path]
+    if query:
+        args += ['-f', 'query=' + query]
+    result = subprocess.run(args, capture_output=True, text=True, encoding='utf-8')
+    if result.returncode:
+        raise RuntimeError('GitHub request failed; previous cards retained.')
+    result = json.loads(result.stdout)
+    if isinstance(result, dict) and result.get('errors'):
+        raise RuntimeError('GitHub returned incomplete data; previous cards retained.')
     return result
 
 
-def text(x, y, value, size=16, color="#fbf2ed"):
-    return f'<text x="{x}" y="{y}" font-size="{size}" fill="{color}">{escape(str(value))}</text>'
+def collect():
+    user = api('user')
+    if user['login'].lower() != USER.lower():
+        raise RuntimeError('The statistics credential belongs to a different account.')
+    repos = []
+    page = 1
+    while True:
+        batch = api(f'user/repos?affiliation=owner&visibility=all&per_page=100&page={page}')
+        repos.extend(r for r in batch if r['owner']['login'].lower() == USER.lower())
+        if len(batch) < 100:
+            break
+        page += 1
+    private_count = sum(r['private'] for r in repos)
+    # Reject the common accidental fallback to a public-only or partial credential.
+    # All-repository access is required; do not silently call a selected subset "all".
+    expected = user.get('owned_private_repos')
+    if expected is not None and private_count != expected:
+        raise RuntimeError('Private repository coverage is incomplete.')
+    minimum = int(os.environ.get('PROFILE_MIN_PRIVATE_REPOS', '18'))
+    if private_count < minimum:
+        raise RuntimeError('Repository coverage fell below the verified baseline; review credential coverage.')
+    repos = [r for r in repos if not r['fork']]
+    languages = Counter()
+    for repo in repos:
+        languages.update(api('repos/' + repo['full_name'] + '/languages'))
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    start = now.replace(year=now.year-1, day=min(now.day, calendar.monthrange(now.year-1, now.month)[1]))
+    query = '''query { viewer { contributionsCollection(from: "%s", to: "%s") {
+      contributionCalendar { totalContributions weeks { contributionDays { date contributionCount weekday } } }
+    } } }''' % (start.isoformat(), now.isoformat())
+    cal = api('graphql', query)['data']['viewer']['contributionsCollection']['contributionCalendar']
+    days = [dict(date=d['date'], count=d['contributionCount'], weekday=d['weekday'])
+            for w in cal['weeks'] for d in w['contributionDays']]
+    if sum(d['count'] for d in days) != cal['totalContributions'] or len(days) < 365:
+        raise RuntimeError('Calendar validation failed; previous cards retained.')
+    verified=os.environ.get('PROFILE_PRIVATE_CALENDAR_VERIFIED') == 'true'
+    return dict(updated=now.strftime('%Y-%m-%d UTC'), repositories=len(repos),
+                stars=sum(r['stargazers_count'] for r in repos if not r['private']),
+                followers=user['followers'], contributions=cal['totalContributions'],
+                languages=dict(languages.most_common()), days=days,
+                calendar_scope='GitHub contribution calendar; private counts verified' if verified else 'GitHub contribution calendar; private visibility not yet verified',
+                private_calendar_verified=verified)
 
 
-def svg(width, height, title, body):
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
-            f'viewBox="0 0 {width} {height}" role="img"><title>{escape(title)}</title>'
-            f'<rect width="{width}" height="{height}" rx="12" fill="#24181e"/>'
-            f'<g font-family="DejaVu Sans,Arial,sans-serif">{body}</g></svg>')
+def save_batch(files):
+    """Stage every output before replacing, restore previous files on I/O failure."""
+    original = {name: (ROOT/name).read_bytes() if (ROOT/name).exists() else None for name in files}
+    with tempfile.TemporaryDirectory(dir=ROOT) as temp:
+        for name, value in files.items():
+            path = Path(temp)/name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(value, encoding='utf-8')
+        try:
+            for name in files:
+                (ROOT/name).parent.mkdir(parents=True, exist_ok=True)
+                os.replace(Path(temp)/name, ROOT/name)
+        except OSError:
+            for name, value in original.items():
+                if value is None:
+                    (ROOT/name).unlink(missing_ok=True)
+                else:
+                    (ROOT/name).write_bytes(value)
+            raise
 
 
 def main():
-    user = api(f"users/{USER}")
-    repos = [r for r in paged(f"users/{USER}/repos") if not r["private"] and r["owner"]["login"].lower() == USER.lower()]
-    languages = Counter()
-    for repo in repos:
-        if not repo["fork"]:
-            languages.update(api(f'repos/{USER}/{repo["name"]}/languages'))
-    events = paged(f"users/{USER}/events/public", maximum=3)
-    now = datetime.now(timezone.utc)
-    dates = [(now - timedelta(days=n)).strftime("%Y-%m-%d") for n in range(30, -1, -1)]
-    counts = Counter(event["created_at"][:10] for event in events)
-    stamp = now.strftime("%Y-%m-%d UTC")
-    body = text(24, 34, "PUBLIC GITHUB", 17, "#d7b5c5")
-    for index, (label, value) in enumerate([
-        ("Repositories", len(repos)), ("Stars received", sum(r["stargazers_count"] for r in repos)),
-        ("Followers", user["followers"]), ("Following", user["following"]),
-    ]):
-        y = 67 + index * 27
-        body += text(24, y, label, 15, "#c9b9c2") + text(330, y, value, 18)
-    body += text(24, 206, f"Updated {stamp}", 11, "#bfa5b4")
-    cards = {"stats.svg": svg(440, 224, "Public GitHub statistics", body)}
-    body = text(24, 34, "LANGUAGES", 17, "#d7b5c5")
-    total = sum(languages.values())
-    palette = ["#c9c7e2", "#d19767", "#a08594", "#f2b493", "#8598c1"]
-    top = languages.most_common(4)
-    if len(languages) > 4:
-        top.append(("Other", total - sum(n for _, n in top)))
-    for index, (name, amount) in enumerate(top):
-        y = 64 + index * 27
-        color = palette[index]
-        body += f'<circle cx="29" cy="{y - 5}" r="4" fill="{color}"/>'
-        body += text(43, y, name, 14) + text(330, y, f"{amount / total:.1%}", 14, color)
-    if not total:
-        body += text(24, 80, "No public language data yet.", 14)
-    body += text(24, 206, "By bytes · public non-fork repos", 11, "#bfa5b4")
-    cards["languages.svg"] = svg(440, 224, "Public repository language distribution", body)
-    body = text(24, 34, "RECENT PUBLIC ACTIVITY", 17, "#d7b5c5")
-    peak = max(1, *(counts[d] for d in dates))
-    body += text(24, 59, f"Last 31 days · up to 300 recent public events · peak {peak}/day", 12, "#bfa5b4")
-    for index, day in enumerate(dates):
-        x = 28 + index * 27
-        h = 105 * counts[day] / peak
-        body += f'<rect x="{x}" y="{184-h}" width="16" height="{max(2,h)}" rx="3" fill="{"#c9c7e2" if counts[day] else "#614653"}"><title>{day}: {counts[day]} events</title></rect>'
-    body += text(24, 210, dates[0], 11, "#bfa5b4") + text(776, 210, dates[-1], 11, "#bfa5b4")
-    body += text(24, 238, "Public events are not a commit count. Private activity is excluded.", 12, "#bfa5b4")
-    cards["activity.svg"] = svg(900, 258, "Recent public events by day", body)
-    for filename, content in cards.items():
-        (ROOT / "assets" / filename).write_text(content, encoding="utf-8")
-    print(f"Rendered {len(cards)} cards from public GitHub data ({stamp}).")
+    from desktop_art import render_cards
+    try:
+        if os.environ.get('GITHUB_ACTIONS') and not os.environ.get('GH_TOKEN'):
+            raise RuntimeError('PROFILE_STATS_TOKEN is required.')
+        data = collect()
+        files = render_cards(data)
+        files['assets/aggregate.json'] = json.dumps(data, indent=2) + '\n'
+        save_batch(files)
+    except Exception:
+        # Do not print exception text, request URLs, raw JSON, or tracebacks.
+        print('Refresh failed validation or authentication. Previous assets were retained.', file=sys.stderr)
+        return 1
+    print('Validated and rendered aggregate profile cards.')
+    return 0
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    sys.exit(main())

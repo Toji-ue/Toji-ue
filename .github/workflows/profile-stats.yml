@@ -1,4 +1,4 @@
-name: Refresh public profile cards
+name: Refresh Toji desktop statistics
 on:
   workflow_dispatch:
   schedule:
@@ -11,18 +11,34 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Render public data
+      - name: Check statistics credential
+        id: credential
         env:
-          GH_TOKEN: ${{ github.token }}
+          STATS_TOKEN: ${{ secrets.PROFILE_STATS_TOKEN }}
+        run: |
+          if [ -z "$STATS_TOKEN" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "PROFILE_STATS_TOKEN is not configured. Keeping the last validated cards." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Fetch and render aggregates
+        if: steps.credential.outputs.configured == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PROFILE_STATS_TOKEN }}
+          PROFILE_MIN_PRIVATE_REPOS: '18'
+          PROFILE_PRIVATE_CALENDAR_VERIFIED: ${{ vars.PROFILE_PRIVATE_CALENDAR_VERIFIED }}
         run: python3 scripts/refresh-stats.py
-      - name: Save changed cards
+      - name: Commit validated cards
+        if: steps.credential.outputs.configured == 'true'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add assets/stats.svg assets/languages.svg assets/activity.svg
+          git add assets/stats.svg assets/languages.svg assets/activity.svg assets/stats-mobile.svg assets/languages-mobile.svg assets/activity-mobile.svg assets/aggregate.json
           if ! git diff --cached --quiet; then
-            git commit -m "Refresh public profile cards"
+            git commit -m "Refresh aggregate profile statistics"
             git push
           fi
