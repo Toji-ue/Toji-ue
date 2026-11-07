@@ -6,7 +6,7 @@
 
 [Source code ↗](https://github.com/Toji-ue/Steam-Unblock) · [Releases ↗](https://github.com/Toji-ue/Steam-Unblock/releases)
 
-<p align="center"><img src="assets/desktop-companion-v2.gif" width="420" alt="Toji, a mauve-haired raccoon with orange goggles, rests a cheek on one hand over a small desktop window. Gentle head tilt and clearly visible ear movement." /></p>
+<p align="center"><img src="assets/desktop-companion-v3.gif" width="420" alt="Toji, a mauve-haired raccoon with orange goggles, rests a cheek on one hand over a small desktop window. Gentle head tilt, ear movement and a striped tail swaying beside the window." /></p>
 
 <picture><source media="(max-width: 600px)" srcset="assets/stats-mobile.svg" /><img src="assets/stats.svg" width="100%" alt="Total owned repositories including private projects, contributions over twelve months, public repository stars and followers." /></picture>
 
@@ -16,7 +16,7 @@
 
 <sub>Repository totals and languages include private projects, without revealing project details. Languages describe repository contents, not proficiency. Contributions follow GitHub's counting rules. Last successful refresh is shown on the card.</sub>
 
-[View a still version of the mascot](assets/desktop-companion-v2.png)
+[View a still version of the mascot](assets/desktop-companion-v3.png)
 
 ---
 
