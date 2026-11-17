@@ -1,20 +1,21 @@
 {
-  "updated": "2026-11-16 UTC",
-  "repositories": 20,
+  "updated": "2026-11-17 UTC",
+  "repositories": 21,
   "stars": 1,
   "followers": 2,
   "contributions": 13,
   "languages": {
-    "TypeScript": 2241271,
+    "TypeScript": 2518177,
     "C++": 913535,
+    "Python": 300646,
     "QML": 298040,
-    "Python": 288542,
-    "JavaScript": 126299,
+    "JavaScript": 138894,
     "PowerShell": 88022,
     "SCSS": 80712,
-    "CSS": 68017,
+    "CSS": 76378,
     "C": 39499,
     "C#": 34727,
+    "PLpgSQL": 13542,
     "Ruby": 13158,
     "Astro": 11361,
     "Dockerfile": 10867,
@@ -22,16 +23,10 @@
     "Shell": 8016,
     "HCL": 5111,
     "NSIS": 4466,
-    "PLpgSQL": 3038,
     "HTML": 2136,
     "Batchfile": 316
   },
   "days": [
-    {
-      "date": "2025-11-16",
-      "count": 0,
-      "weekday": 0
-    },
     {
       "date": "2025-11-17",
       "count": 0,
@@ -1856,6 +1851,11 @@
       "date": "2026-11-16",
       "count": 0,
       "weekday": 1
+    },
+    {
+      "date": "2026-11-17",
+      "count": 0,
+      "weekday": 2
     }
   ],
   "calendar_scope": "GitHub contribution calendar; private counts verified",
